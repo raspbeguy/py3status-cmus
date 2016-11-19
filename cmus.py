@@ -8,11 +8,11 @@ Configuration parameters:
     format: see placeholders below
         (default '{state} [{artist} - ][{title}]')
     format_none: define output if no cmus is running
-        (default 'no player running')
+        (default 'no player')
     state_pause: text for placeholder {state} when song is paused (default '▮')
     state_play: text for placeholder {state} when song is playing (default '▶')
     state_stop: text for placeholder {state} when song is stopped (default '◾')
-    state_unknown: text for placeholder {state} when song is in unknown status (defaut '?')
+    state_unknown: text for placeholder {state} when song is in unknown status (default '?')
 
 Format of status string placeholders:
     {album} album name
@@ -34,8 +34,8 @@ cmus {
 
 import subprocess
 
+
 class Py3status:
-    cache_timeout = 0
     format = '{state} [{artist} - ][{title}]'
     format_none = "no player"
     state_pause = u'▮'
@@ -44,7 +44,9 @@ class Py3status:
     state_unknown = u'?'
 
     def _get_cmus_info(self):
-        cmus_remote_pipe = subprocess.Popen(["cmus-remote", "-Q"], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        cmus_remote_pipe = subprocess.Popen(["cmus-remote", "-Q"],
+                                            stdout=subprocess.PIPE,
+                                            stderr=subprocess.PIPE)
         cmus_info_text = cmus_remote_pipe.communicate()[0].decode()
 
         if cmus_info_text == "":
@@ -52,16 +54,15 @@ class Py3status:
 
         cmus_info = {
             "tags": {}
-        };
-    
+        }
+
         for line in cmus_info_text.splitlines():
             entry = line.split(None, 2)
-            
             if entry[0] == "tag" and len(entry) > 2:
                 cmus_info["tags"][entry[1]] = entry[2]
             elif len(entry) > 1:
                 cmus_info[entry[0]] = entry[1]
-    
+
         return cmus_info
 
     def _get_text(self, cmus_info):
@@ -79,17 +80,6 @@ class Py3status:
                 color = self.py3.COLOR_BAD
                 state_symbol = self.state_unknown
 
-            if "artist" in cmus_info["tags"]:
-                now_playing_artist = cmus_info["tags"]["artist"]
-            else:
-                now_playing_artist = "Unknown"
-
-            if "title" in cmus_info["tags"]:
-                now_playing_title = cmus_info["tags"]["title"]
-            else:
-                now_playing_title = "Unknown"
-
-
         placeholders = {
             'state': state_symbol,
             'album': cmus_info["tags"]["album"] if "album" in cmus_info["tags"] else "",
@@ -102,7 +92,7 @@ class Py3status:
     def cmus(self, i3s_output_list, i3s_config):
         cmus_info = self._get_cmus_info()
         (text, color) = self._get_text(cmus_info)
-        full_text = self.py3.safe_format(self.format,text)
+        full_text = self.py3.safe_format(self.format, text)
         response = {
             'color': color,
             'full_text': full_text,
@@ -115,9 +105,10 @@ class Py3status:
         if button == 1:
             subprocess.call(["cmus-remote", "--pause"])
 
+
 if __name__ == "__main__":
     """
     Test this module by calling it directly.
     """
     from py3status.module_test import module_test
-    module_test(Py3status) 
+    module_test(Py3status)
